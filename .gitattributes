@@ -1,0 +1,3 @@
+# Per-branch ownership: when the orchestrator merges main into an existing exact branch, these files stay as-is via the `ours` merge driver (configured at runtime by update-branches). flake.nix is NOT branch-owned here — no sibling cascade — so it tracks main and picks up improvements via merge.
+pin.nix     merge=ours
+flake.lock  merge=ours

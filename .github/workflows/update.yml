@@ -1,0 +1,33 @@
+name: Update branches
+
+on:
+  schedule:
+    - cron: '0 7 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update
+  cancel-in-progress: false
+
+env:
+  MINIMUM_TRACKING_VERSION: "2026.6.1"
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Orchestrate per-version branches
+        env:
+          # The torch/xformers/bitsandbytes closure won't build on a GH runner; the pin hash is prefetched from PyPI, so skip the per-branch build verification.
+          SKIP_BUILD: "1"
+        run: nix run .#update-branches
