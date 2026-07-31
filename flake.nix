@@ -27,6 +27,8 @@
                 pname = "unsloth";
                 inherit version hash;
               };
+              # 2026.7+ added structlog to the base runtime requirements; nixpkgs' dependency list (curated for 2026.4.5) predates it. Harmless duplicate once nixpkgs catches up.
+              dependencies = prevAttrs.dependencies ++ [ pyfinal.structlog ];
               # unsloth ${version} requires unsloth_zoo>=${version}. Standalone build-verify here resolves zoo from nixpkgs (older); relaxing keeps that build green. The real consumer overlays the matching unsloth-zoo bump, so the constraint is satisfied there.
               pythonRelaxDeps = (prevAttrs.pythonRelaxDeps or [ ]) ++ [ "unsloth_zoo" ];
             });
