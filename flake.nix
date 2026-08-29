@@ -10,7 +10,7 @@
       inputs.flake-utils.follows = "flake-utils";
     };
     unsloth-zoo = {
-      url = "github:jgus/unsloth-zoo-flake/main";
+      url = "github:jgus/unsloth-zoo-flake";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-utils.follows = "flake-utils";
       inputs.flake-lib.follows = "flake-lib";
@@ -69,15 +69,11 @@
                   mode = "resolve";
                 }
               ];
+              siblingRefsInPin = true;
             };
             update-branches = flake-lib.lib.mkUpdateBranches {
               inherit pkgs source;
               pinSchema = "pypi";
-              branchOwnedFiles = [
-                "pin.nix"
-                "flake.lock"
-                "flake.nix"
-              ];
             };
           };
         }) // {
