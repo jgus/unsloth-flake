@@ -9,16 +9,22 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-utils.follows = "flake-utils";
     };
+    unsloth-zoo = {
+      url = "github:jgus/unsloth-zoo-flake/main";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-utils.follows = "flake-utils";
+      inputs.flake-lib.follows = "flake-lib";
+    };
   };
 
-  outputs = { self, nixpkgs, flake-utils, flake-lib }:
+  outputs = { self, nixpkgs, flake-utils, flake-lib, unsloth-zoo }:
     let
       pin = import ./pin.nix;
       inherit (pin) version hash;
       source = { type = "pypi"; pname = "unsloth"; format = "sdist"; };
 
       # Bump via pythonPackagesExtensions, not packageOverrides: consumers (unsloth-studio) resolve deps through the interpreter self-reference `python.pkgs`, which only reflects extensions, not packageOverrides. Reuse nixpkgs' curated derivation (deps, postPatch, pythonRelaxDeps/RemoveDeps) and change only version + src; cuda config flows through nixpkgs' torch/xformers/bitsandbytes unchanged.
-      overlay = final: prev: {
+      unslothOverlay = final: prev: {
         pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
           (pyfinal: pyprev: {
             unsloth = pyprev.unsloth.overridePythonAttrs (prevAttrs: {
@@ -29,12 +35,15 @@
               };
               # 2026.7+ added structlog to the base runtime requirements; nixpkgs' dependency list (curated for 2026.4.5) predates it. Harmless duplicate once nixpkgs catches up.
               dependencies = prevAttrs.dependencies ++ [ pyfinal.structlog ];
-              # unsloth ${version} requires unsloth_zoo>=${version}. Standalone build-verify here resolves zoo from nixpkgs (older); relaxing keeps that build green. The real consumer overlays the matching unsloth-zoo bump, so the constraint is satisfied there.
-              pythonRelaxDeps = (prevAttrs.pythonRelaxDeps or [ ]) ++ [ "unsloth_zoo" ];
             });
           })
         ];
       };
+
+      overlay = nixpkgs.lib.composeManyExtensions [
+        unsloth-zoo.overlays.default
+        unslothOverlay
+      ];
     in
     flake-utils.lib.eachDefaultSystem
       (system:
@@ -52,10 +61,23 @@
             update-version = flake-lib.lib.mkUpdateVersion {
               inherit pkgs source;
               buildAttr = "unsloth";
+              siblings = [
+                {
+                  reqName = "unsloth-zoo";
+                  pypiName = "unsloth-zoo";
+                  flakeRepo = "jgus/unsloth-zoo-flake";
+                  mode = "resolve";
+                }
+              ];
             };
             update-branches = flake-lib.lib.mkUpdateBranches {
               inherit pkgs source;
               pinSchema = "pypi";
+              branchOwnedFiles = [
+                "pin.nix"
+                "flake.lock"
+                "flake.nix"
+              ];
             };
           };
         }) // {
