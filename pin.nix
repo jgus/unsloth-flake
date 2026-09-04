@@ -1,6 +1,6 @@
 {
-  version = "2026.8.22";
-  hash = "sha256-K3wbtbqvMK9iX3qnLhAUCUU6vwYwMjAfHN+v3wV0yd4=";
+  version = "2026.9.2";
+  hash = "sha256-xRnvnxpc4/Ro6xlv85BtiPyXJmf0Fh+NJjC3qDgIF9E=";
   dependencies = {
     "unsloth-zoo" = "main";
   };
